@@ -1,0 +1,152 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color:#f0f8ff;
+        }
+        .image {
+            display:inline;
+        }
+        #outputArea {
+            margin: 4px, 4px;
+            padding: 4px;
+            width: 1140px;
+            height: 600px;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form>
+            <div class="form-group">
+                <label class="sr-only" for="q">Search:</label>
+                <input type="text" class="form-control" id="q" placeholder="Enter search">
+                <button type="button" class="btn btn-primary" onClick="handleClickRandom()">Random</button>
+                <button type="button" class="btn btn-primary" onClick="handleClickTranslate()">Translate</button>
+                <button type="button" class="btn btn-primary" onClick="handleClickSearch()">Search</button>
+                <button type="button" class="btn" id="prev" onClick="handleClickPrev()" disabled>&lt;</button>
+                <button type="button" class="btn" id="next" onClick="handleClickNext()" disabled>&gt;</button>   
+            </div>
+        </form>
+        <div id="outputArea"></div>
+        <div>
+         </div>
+    </div>
+</form>
+
+<script>
+    let offset = 0;
+    let total_count = 0;
+    let last_search = "";
+    const API_KEY = "cSbbqWdJnhwMO0dOyMTQuOwXp9GQGODs";
+    const PAGE_SIZE = 10;
+
+    function setNavButtons() {
+        if (offset > 0)
+            document.getElementById("prev").disabled = false;
+        else
+            document.getElementById("prev").disabled = true;
+        if (total_count > 0 && offset <= (total_count+PAGE_SIZE))
+            document.getElementById("next").disabled = false;
+        else
+            document.getElementById("next").disabled = true;
+    }
+    function handleClickPrev() {
+        if (offset >= PAGE_SIZE) {
+            offset -= PAGE_SIZE;
+            handleClickSearch();
+        }       
+    }
+    function handleClickNext() {
+        if (offset <= (total_count+PAGE_SIZE)) {
+            offset += PAGE_SIZE;
+            handleClickSearch();
+        }
+    }
+    function handleClickRandom() {
+        console.log("handleClickRandom called");  
+        offset = 0; 
+        total_count = 0;
+        setNavButtons();
+        const elementOutputArea = document.getElementById("outputArea");
+        //let url = `http://api.giphy.com/v1/gifs/random?api_key=cSbbqWdJnhwMO0dOyMTQuOwXp9GQGODs`;
+        let url = `http://api.giphy.com/v1/gifs/random?api_key=${API_KEY}`;
+
+        fetch(url, {method: "GET"})
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(json);
+                const mp4 = json.data.images.fixed_height.url; //json.data.user.avatar_url
+                const title = json.data.title;
+                const img =`<img src="${mp4}" alt="${title}" />`; // `<img src="${mp4}" alt="${title}" width="300">`
+                console.log('mp4=' + mp4);
+                console.log('title=' + title);
+                console.log('img=' + img);
+
+                elementOutputArea.innerHTML = img;
+            });
+    }
+    function handleClickTranslate() {
+        console.log("handleClickTranslate called");
+        offset = 0;
+        total_count = 0;
+        setNavButtons();   
+        const search = document.getElementById("q").value;
+        const elementOutputArea = document.getElementById("outputArea");
+        let url = `http://api.giphy.com/v1/gifs/translate?api_key=${API_KEY}&s=${search}`;
+        console.log('url=' + url);
+
+        fetch(url, {method: "GET"})
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(json);
+                const mp4 = json.data.images.fixed_height.url; //json.data.user.avatar_url
+                const title = json.data.title;
+                const img =`<img src="${mp4}" alt="${title}" />`; // `<img src="${mp4}" alt="${title}" width="300">`
+                console.log('mp4=' + mp4);;
+                console.log('title=' + title)
+                console.log('img=' + img);
+
+                elementOutputArea.innerHTML = img;
+            });
+    }
+    function handleClickSearch() {
+        console.log("handleClickSearch called");   
+        const search = document.getElementById("q").value;
+        if (search != last_search)
+            offset = 0;
+        last_search = search;
+        const elementOutputArea = document.getElementById("outputArea");
+        let url = `http://api.giphy.com/v1/gifs/search?q=${search}&api_key=${API_KEY}&limit=${PAGE_SIZE}&offset=${offset}`;
+        console.log('url=' + url);
+
+        fetch(url, {method: "GET"})
+            .then((response) => response.json())
+            .then((json) => {
+                console.log(json);
+                console.log(json.pagination);
+                total_count = json.pagination.total_count;
+                offset = json.pagination.offset;
+                setNavButtons();
+
+                elementOutputArea.innerHTML = "";
+                for (let data of json.data) {
+                    const mp4 = data.images.fixed_height.url; //json.data.user.avatar_url
+                    const title = data.title;
+                    const img =`<img src="${mp4}" alt="${title}" />`; // `<img src="${mp4}" alt="${title}" width="300">`
+                    //const img =`<div class="image" style="background-image:url('${mp4}'); width:200px; height:100px; background-position:center;">&nbsp;</div>`
+                    //console.log('mp4=' + mp4);;
+                    //console.log('title=' + title)
+                    //console.log('img=' + img);
+                    elementOutputArea.innerHTML += img;
+                }
+            });
+    }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</body>
+</html>
